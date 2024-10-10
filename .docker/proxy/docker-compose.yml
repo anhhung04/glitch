@@ -7,9 +7,9 @@ services:
     hostname: ${HOSTNAME}
     restart: always
     stop_signal: SIGINT
-    # networks:
-    #   glitch_game:
-    #     ipv4_address: ${IP}
+    networks:
+      glitch_game:
+        ipv4_address: ${IP}
     cap_add:
       - NET_ADMIN
     privileged: true
