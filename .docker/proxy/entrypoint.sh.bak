@@ -2,6 +2,6 @@
 
 set -e
 
-{IPTABLE_RULES}
+IPTABLE_RULES
 
 service ssh start && tail -f /dev/null
