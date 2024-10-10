@@ -3,29 +3,18 @@ services:
     image: ${HOSTNAME}
     build:
       context: .
-      args:
-        - HOSTNAME=${HOSTNAME}
     container_name: ${HOSTNAME}
     hostname: ${HOSTNAME}
     restart: always
     stop_signal: SIGINT
-    networks:
-      glitch_game:
-        ipv4_address: ${IP}
+    # networks:
+    #   glitch_game:
+    #     ipv4_address: ${IP}
     cap_add:
       - NET_ADMIN
+    privileged: true
     sysctls:
       - net.ipv4.ip_forward=1
-      - net.ipv4.conf.all.accept_redirects=1
-      - net.ipv4.conf.default.accept_redirects=1
-      - net.ipv4.icmp_echo_ignore_all=1
-      - net.ipv4.conf.all.log_martians=1
-      - net.ipv4.conf.default.log_martians=1
-      - net.ipv6.conf.all.accept_redirects=1
-      - net.ipv6.conf.default.accept_redirects=1
-    volumes:
-      - /lib/modules:/lib/modules:ro
-
 networks:
   glitch_game:
     driver: bridge

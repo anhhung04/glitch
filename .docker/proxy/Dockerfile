@@ -1,8 +1,5 @@
 FROM ubuntu:22.04
 
-USER root
-ARG HOSTNAME
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
@@ -15,23 +12,13 @@ RUN apt-get update && apt-get install -y \
     ufw \
     htop \
     vim \
-    conntrack \
-    limit \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    conntrack
 
 COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-RUN mkdir /var/run/sshd
 RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
-
-RUN ufw default allow incoming \
-    && ufw default allow outgoing \
-    && ufw --force enable
-
-
 RUN echo -n "root:root" | chpasswd
-RUN hostnamectl set-hostname $HOSTNAME
 
 EXPOSE 22
 
