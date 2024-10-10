@@ -48,6 +48,10 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
             docker rmi -f ${HOSTNAME}_service >/dev/null 2>&1
         fi
     done
+    HOSTNAME="team$TEAM_ID-proxy"
+    docker rm -f $HOSTNAME >/dev/null 2>&1
+    docker rmi -f $HOSTNAME >/dev/null 2>&1
+
 done
 
 # Loop over every checker

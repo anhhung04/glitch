@@ -171,7 +171,7 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
   IP=$(echo "10.100.$TEAM_ID.1" | tr '[:upper:]' '[:lower:]')
   HOSTNAME=$(echo "team$TEAM_ID-proxy" | tr '[:upper:]' '[:lower:]')
   echo "$IP ($HOSTNAME) - root : root" >>./.docker/api/teamdata/$TEAM_TOKEN/creds.txt
-  IP=$IP HOSTNAME=$HOSTNAME TEAM_ID=$TEAM_ID docker compose -f ./.docker/proxy/docker-compose.yml --project-name $HOSTNAME-proxy up -d >>./debug.log 2>&1
+  IP=$IP HOSTNAME=$HOSTNAME TEAM_ID=$TEAM_ID docker compose -f ./.docker/proxy/docker-compose.yml --project-name $HOSTNAME up -d >>./debug.log 2>&1
   rm -f ./.docker/proxy/entrypoint.sh
   # Zip teamdata directory
   pushd ./.docker/api/teamdata >/dev/null

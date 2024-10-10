@@ -49,6 +49,8 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
             docker stop $HOSTNAME -t 1 >/dev/null &
         fi
     done
+    echo "Stopping team $TEAM_ID proxy..."
+    docker stop "team$TEAM_ID-proxy" >/dev/null &
 done
 
 sleep 2
