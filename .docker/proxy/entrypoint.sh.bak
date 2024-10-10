@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+{IPTABLE_RULES}
+
+service ssh start && tail -f /dev/null

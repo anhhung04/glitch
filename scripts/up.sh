@@ -57,6 +57,10 @@ rm -rf ./.docker/api/teamdata
 mkdir ./.docker/api/teamdata
 echo "Team data download links (distribute one link to each team):" >./teamdata.txt
 
+info() {
+  echo -e "\033[1;32m[INFO]\033[0m $1"
+}
+
 # Generate team tokens
 TEAM_TOKENS=""
 for TEAM_ID in $(seq 1 $TEAM_COUNT); do
@@ -86,6 +90,24 @@ if [ "$CAPTURE_PCAPS" = true ]; then
   docker exec -d vpn sh -c 'apk update && apk add tcpdump && tcpdump -i any -G $TICK_SECONDS -w /pcaps/$START_TIME_PATH/range_$START_TIME_%Y-%m-%dT%H-%M-%SZ.pcap -s 0 -S net 10.101.0.0/15'
 fi
 
+find_ports() {
+  local compose_file=$(find "$1" -name 'docker-compose.yaml' -o -name 'docker-compose.yml' | head -n 1)
+
+  if [ ! -f "$compose_file" ]; then
+    echo "Error: Docker Compose file '$compose_file' not found."
+    return 1
+  fi
+
+  echo "Published ports in $compose_file:"
+  grep -E '^\s*-\s*"?[0-9]+:[0-9]+"?' "$compose_file" |
+    sed -E 's/.*"?([0-9]+):([0-9]+)"?.*/\1 -> \2/' |
+    sort -n |
+    uniq |
+    while read -r line; do
+      echo "  $line"
+    done
+}
+
 # Loop from 1 to $TEAM_COUNT - 1
 for TEAM_ID in $(seq 1 $TEAM_COUNT); do
   echo "Starting team $TEAM_ID..."
@@ -96,8 +118,9 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
     cp ./.docker/vpn/$VPN_NAME/$VPN_NAME.conf ./.docker/api/teamdata/$TEAM_TOKEN/vpn/wg$VPN_ID.conf
   done
   # Create a counter for service IDs starting at 1
-  SERVICE_ID=0
-  SERVICE_INDEX=0
+  SERVICE_ID=1
+  SERVICE_INDEX=1
+  IPTABLE_RULES=""
   for SERVICE_NAME in $SERVICE_LIST; do
     SERVICE_INDEX=$(expr $SERVICE_INDEX + 1)
     if [ "$(echo $SERVICES | cut -d, -f$SERVICE_INDEX)" == "$(echo $SERVICES, | cut -d, -f$(expr $SERVICE_INDEX + 1))" ]; then
@@ -109,6 +132,11 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
     if [ -d "$dir" ]; then
       # Start docker compose in the /services directory with a volume mount of the directory
       # Generate a random root password
+      local exposed_ports=$(find_ports "./services/$SERVICE_NAME")
+      for port in $exposed_ports; do
+        IPTABLE_RULES="$IPTABLE_RULES\niptables -t nat -A PREROUTING -p tcp --dport $port -j DNAT --to-destination 10.100.$TEAM_ID.$SERVICE_ID:$port"
+        IPTABLE_RULES="$IPTABLE_RULES\niptables -t nat -A POSTROUTING -p tcp -d 10.100.$TEAM_ID.$SERVICE_ID --dport $port -j MASQUERADE"
+      done
       ROOT_PASSWORD="$(openssl rand -hex 16)"
       HOSTNAME=$(echo "team$TEAM_ID-$SERVICE_NAME" | tr '[:upper:]' '[:lower:]')
       IP=$(echo "10.100.$TEAM_ID.$SERVICE_ID" | tr '[:upper:]' '[:lower:]')
@@ -117,10 +145,20 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
       IP=$IP HOSTNAME=$HOSTNAME TEAM_ID=$TEAM_ID SERVICE_ID=$SERVICE_ID SERVICE_NAME=$SERVICE_NAME ROOT_PASSWORD=$ROOT_PASSWORD CPU_LIMIT=$CPU_LIMIT MEM_LIMIT=$MEM_LIMIT docker compose -f ./services/docker-compose.yaml --project-name $HOSTNAME up -d >>./debug.log 2>&1
     fi
   done
+  info "Starting proxy for $TEAM_ID..."
+  # Start proxy for team
+  info "IPTABLE_RULES: $IPTABLE_RULES"
+  cp ./.docker/proxy/entrypoint.sh.bak ./.docker/proxy/entrypoint.sh
+  sed -i "s/{IPTABLE_RULES}/$IPTABLE_RULES/g" ./.docker/proxy/entrypoint.sh
+  IP=$(echo "10.100.$TEAM_ID.1" | tr '[:upper:]' '[:lower:]')
+  HOSTNAME=$(echo "team$TEAM_ID-proxy" | tr '[:upper:]' '[:lower:]')
+  IP=$IP HOSTNAME=$HOSTNAME TEAM_ID=$TEAM_ID docker compose -f ./.docker/proxy/docker-compose.yml --project-name $HOSTNAME-proxy up -d >>./debug.log 2>&1
+  rm -f ./.docker/proxy/entrypoint.sh.bak
   # Zip teamdata directory
   pushd ./.docker/api/teamdata >/dev/null
   zip -r $TEAM_TOKEN.zip $TEAM_TOKEN >/dev/null
   popd >/dev/null
+  info "Finished starting team $TEAM_ID."
 done
 
 SERVICE_ID=1

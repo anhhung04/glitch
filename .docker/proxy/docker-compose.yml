@@ -1,0 +1,19 @@
+services:
+  proxy:
+    build:
+      context: .
+      args:
+        - HOSTNAME=${HOSTNAME}
+    container_name: ${HOSTNAME}
+    hostname: ${HOSTNAME}
+    privileged: true
+    restart: always
+    stop_signal: SIGINT
+    networks:
+      glitch_game:
+        ipv4_address: ${IP}
+
+networks:
+  glitch_game:
+    driver: bridge
+    external: true
