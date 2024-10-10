@@ -13,6 +13,8 @@ services:
     networks:
       glitch_game:
         ipv4_address: ${IP}
+    cap_add:
+      - NET_ADMIN
 
 networks:
   glitch_game:
