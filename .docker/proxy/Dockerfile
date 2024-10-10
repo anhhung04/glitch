@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     ufw \
     htop \
     vim \
+    conntrack \
+    limit \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,8 +25,10 @@ COPY ./entrypoint.sh /entrypoint.sh
 RUN mkdir /var/run/sshd
 RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
-RUN ufw default allow in \
+RUN ufw default allow incoming \
+    && ufw default allow outgoing \
     && ufw --force enable
+
 
 RUN echo -n "root:root" | chpasswd
 RUN hostnamectl set-hostname $HOSTNAME
