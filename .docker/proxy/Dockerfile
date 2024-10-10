@@ -1,5 +1,6 @@
 FROM ubuntu:22.04
 
+USER root
 ARG HOSTNAME
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,7 +23,7 @@ COPY ./entrypoint.sh /entrypoint.sh
 RUN mkdir /var/run/sshd
 RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
-RUN ufw allow 22/tcp \
+RUN ufw default allow in \
     && ufw --force enable
 
 RUN echo -n "root:root" | chpasswd
