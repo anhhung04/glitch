@@ -81,10 +81,10 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
             exposed_ports=$(find_ports "./services/$RAW_SERVICE_NAME")
             for port in $exposed_ports; do
                 if [ $SERVICE_NAME == "h-*" ]; then
-                    touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.http.conf
+                    touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.http.conf
                     echo $BASE_HTTP_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" -e "s/PORT_OUT/$port/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.http.conf
                 elif [ $SERVICE_NAME == "p-*" ]; then
-                    touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.stream.conf
+                    touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.stream.conf
                     echo $BASE_PWN_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.stream.conf
                 fi
             done
