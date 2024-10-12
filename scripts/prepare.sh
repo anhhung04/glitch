@@ -72,20 +72,21 @@ for TEAM_ID in $(seq 1 $TEAM_COUNT); do
         if [ "$(echo $SERVICES | cut -d, -f$SERVICE_INDEX)" == "$(echo $SERVICES, | cut -d, -f$(expr $SERVICE_INDEX + 1))" ]; then
             continue
         fi
-        echo "Creating config service $SERVICE_NAME for team $TEAM_ID..."
         SERVICE_ID=$(expr $SERVICE_ID + 1)
         RAW_SERVICE_NAME=$(echo $SERVICE_NAME | cut -d- -f2)
         dir="./services/$RAW_SERVICE_NAME/"
+        echo "Creating config service $RAW_SERVICE_NAME for team $TEAM_ID..."
         # If the file is a directory
         if [ -d "$dir" ]; then
             exposed_ports=$(find_ports "./services/$RAW_SERVICE_NAME")
             for port in $exposed_ports; do
+		echo "Create config for port $port of service $RAW_SERVICE_NAME"
                 if [ $SERVICE_NAME == "h-*" ]; then
                     touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.http.conf
-                    echo $BASE_HTTP_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" -e "s/PORT_OUT/$port/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.http.conf
+                    echo $BASE_HTTP_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" -e "s/PORT_OUT/$port/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.http.conf
                 elif [ $SERVICE_NAME == "p-*" ]; then
                     touch $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.stream.conf
-                    echo $BASE_PWN_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME.stream.conf
+                    echo $BASE_PWN_CONFIG | sed -e "s/PORT_IN/80$TEAM_ID$SERVICE_INDEX/g" -e "s/IP/10.100.$TEAM_ID.1/g" | tee -a $NGINX_CONFIG_DIR/conf.d/$TEAM_ID-$RAW_SERVICE_NAME-$port.stream.conf
                 fi
             done
         fi
