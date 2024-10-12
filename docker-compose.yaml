@@ -77,11 +77,9 @@ services:
     build:
       context: ./.docker/rangemaster
       dockerfile: Dockerfile
-    image: alpine:latest
     hostname: rangemaster
     container_name: rangemaster
     restart: always
-    entrypoint: sleep infinity
     networks:
       game:
         ipv4_address: 10.101.0.5
