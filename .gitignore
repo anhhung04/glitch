@@ -8,4 +8,4 @@ pcaps
 debug.log
 teamdata.txt
 **/__pycache__/
-nginx/conf.d/*
+.docker/rangemaster/nginx/conf.d
